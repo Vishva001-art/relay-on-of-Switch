@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ESP32 MQTT Relay Dashboard</title>
+<script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
+<style>
+  body { font-family: Arial, sans-serif; background:#f3f3f3; text-align:center; padding:40px;}
+  h2 { color:#333; }
+  button {
+    width:120px; height:50px; font-size:18px; margin:10px;
+    border:none; border-radius:10px; cursor:pointer;
+    transition:0.3s; box-shadow:0 4px 8px rgba(0,0,0,0.2);
+  }
+  .on { background:#4CAF50; color:white; }
+  .off { background:#f44336; color:white; }
+  #status { margin-top:20px; font-weight:bold; }
+</style>
+</head>
+<body>
+
+<h2>ESP32 MQTT Relay Control</h2>
+<button id="onBtn" class="on">Turn ON</button>
+<button id="offBtn" class="off">Turn OFF</button>
+<p id="status">Status: <span id="relayState">UNKNOWN</span></p>
+
+<script>
+// ======= MQTT CONFIG =======
+const broker = "wss://f37d85d12b904fdd8d43b3a97b91cada.s1.eu.hivemq.cloud:8884/mqtt";
+const options = {
+  username: "hivemq.webclient.1755579010101",
+  password: "2.h4,Nt9l!IgWv1:HSTu",
+  clean: true,
+  connectTimeout: 4000,
+  clientId: "web-dashboard-" + Math.random().toString(16).substr(2, 8)
+};
+
+const subTopic = "home/room1/relay1/status";
+const pubTopic = "home/room1/relay1/set";
+// ============================
+
+// Connect to broker
+const client = mqtt.connect(broker, options);
+
+client.on("connect", () => {
+  console.log("Connected to MQTT broker");
+  client.subscribe(subTopic);
+});
+
+client.on("message", (topic, message) => {
+  if (topic === subTopic) {
+    const state = message.toString();
+    document.getElementById("relayState").innerText = state;
+  }
+});
+
+client.on("error", err => console.error("Connection error:", err));
+
+document.getElementById("onBtn").addEventListener("click", () => {
+  client.publish(pubTopic, "ON");
+});
+document.getElementById("offBtn").addEventListener("click", () => {
+  client.publish(pubTopic, "OFF");
+});
+</script>
+
+</body>
+</html>
